@@ -196,6 +196,50 @@ body[data-theme="dark"] #resetPasswordButton { color: #e6d5ff; }
 #smartCategory { background: #454259 !important; color: #ffffff !important; }
 #ideaBackControls { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
 #ideaBackControls button { margin: 0; }
+
+/* 0.9: Kontrastfix för Idébanken och AI-kompisen i mörkt läge.
+   Ljusa kort behåller mörk text; mörka ytor får ljus text. */
+body[data-theme="dark"] #ideasPage > h2,
+body[data-theme="dark"] #ideasPage > h3,
+body[data-theme="dark"] #aiPage > h2 { color: #f1edf8; }
+body[data-theme="dark"] #ideasPage #ownPlan08,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel,
+body[data-theme="dark"] #ideasPage #premiumIdeas08,
+body[data-theme="dark"] #aiPage .panel,
+body[data-theme="dark"] #aiPage .notice {
+  background: #f7f3fc !important;
+  color: #30263b !important;
+}
+body[data-theme="dark"] #ideasPage #ownPlan08 *,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel h3,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel p,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel label,
+body[data-theme="dark"] #ideasPage #premiumIdeas08 *,
+body[data-theme="dark"] #aiPage .panel *,
+body[data-theme="dark"] #aiPage .notice * {
+  color: #30263b;
+}
+body[data-theme="dark"] #ideasPage #ownPlan08 input,
+body[data-theme="dark"] #ideasPage #ownPlan08 textarea,
+body[data-theme="dark"] #ideasPage #ownPlan08 select,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel select {
+  background: #ffffff !important;
+  color: #30263b !important;
+  border-color: #75618b !important;
+}
+body[data-theme="dark"] #ideasPage #ownPlan08 textarea::placeholder,
+body[data-theme="dark"] #aiPage textarea::placeholder { color: #70617d; opacity: 1; }
+body[data-theme="dark"] #ideasPage #ownPlan08 button,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel button { color: #ffffff; }
+body[data-theme="dark"] #ideasPage #ownPlan08 button.alt,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel button.alt { color: #563879; }
+body[data-theme="dark"] #aiPage .small { color: #f1edf8; }
+body[data-theme="dark"] #aiPage #aiMessages { color: #30263b !important; }
+body[data-theme="dark"] #aiPage #aiMessages * { color: inherit; }
+body[data-theme="dark"] #aiPage textarea,
+body[data-theme="dark"] #aiPage select { color: #ffffff; background: #454259; }
+body[data-theme="dark"] #aiPage button.alt { color: #563879; background: #eae1f4; }
+body[data-theme="dark"] #ideasPage #ownPlan08 .small { color: #51435f; }
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
