@@ -1,4 +1,4 @@
-<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fokuskompisen 0.8 TEST</title><meta name="theme-color" content="#7853a3"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Fokuskompisen"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png"><style>
+<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fokuskompisen 0.9 TEST</title><meta name="theme-color" content="#7853a3"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Fokuskompisen"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-192.png"><style>
 *{box-sizing:border-box}body{font:16px/1.5 system-ui,sans-serif;background:#f4effa;color:#392d47;margin:0}header{text-align:center;padding:28px 12px}h1,h2{color:#68458e}h1{margin:0}main{max-width:850px;margin:auto;padding:0 12px}section{background:#fff;border-radius:18px;padding:20px;margin-bottom:15px;box-shadow:0 3px 15px #4e2e6410}label{display:block;margin:10px 0 5px;font-weight:600}input:not([type=checkbox]),textarea,select{width:100%;padding:10px;border:1px solid #d9c8e8;border-radius:9px;font:inherit}textarea{min-height:65px}button{background:#7856a2;color:white;border:0;border-radius:9px;padding:10px 13px;margin:5px 5px 5px 0;font:inherit;cursor:pointer}.alt{background:#eae1f4;color:#563879}.selected{background:#4c3070}.flex{display:flex;gap:12px;flex-wrap:wrap}.flex>*{flex:1;min-width:175px}.panel{background:#f7f3fc;border-radius:11px;padding:12px;margin:9px 0}.done{opacity:.6}.done strong{text-decoration:line-through}.week{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.small{font-size:.9em;color:#695d73}#clock{text-align:center;font-size:2.3rem;color:#68458e;font-weight:700}footer{text-align:center;padding:20px;color:#695d73}
 
 .notice{border-left:4px solid #7954a2;background:#f6effd;padding:12px;border-radius:8px}
@@ -216,7 +216,7 @@ body[data-theme="dark"] #resetPasswordButton { color: #e6d5ff; }
   <button type="button" data-page="tasks">✅ Mina uppgifter</button><button type="button" data-page="addTask">➕ Ny uppgift</button>
   <button type="button" data-page="week">🗓️ Veckoplanering</button><button type="button" data-page="steps">👣 Små steg</button><button type="button" data-page="pause">☕ Pauskompis</button><button type="button" data-page="ideas">💡 Idébank</button>
   <button type="button" data-page="reminders">🔔 Mina påminnelser</button>
-  <button type="button" data-page="settings">⚙️ Inställningar</button><button type="button" data-page="backup">💾 Säkerhetskopia</button>
+  <button type="button" data-page="ai">💜 AI-kompisen (demo)</button><button type="button" data-page="settings">⚙️ Inställningar</button><button type="button" data-page="backup">💾 Säkerhetskopia</button>
 </nav><p>En sak i taget. Du bestämmer takten.</p></header>
       <main>
       <section id="loginSection" class="panel" aria-label="Inloggning">
@@ -338,7 +338,19 @@ body[data-theme="dark"] #resetPasswordButton { color: #e6d5ff; }
   <span id="reminderVolumeValue">50 %</span>
 </p>
 
-</section></main><footer>Fokuskompisen 0.8 TEST 💜 · Sparar lokalt på enheten · Säkerhetskopiera regelbundet · Fungerar utan internet</footer>
+</section><section id="aiPage" hidden aria-label="AI-kompisen demo">
+<h2>💜 AI-kompisen</h2>
+<p class="notice"><strong>Testversion:</strong> Detta är en enkel chattdemo med förberedda svar, inte riktig AI. Skriv inte känsliga personuppgifter här. Ingen chatt sparas.</p>
+<label for="aiTone">Hur vill du att kompisen ska svara?</label>
+<select id="aiTone"><option value="warm">Varm och omtänksam</option><option value="clear">Tydlig och konkret</option><option value="peppy">Peppande</option></select>
+<label for="aiLength">Svarslängd</label>
+<select id="aiLength"><option value="medium">Lagom</option><option value="short">Kort</option><option value="long">Utförligt</option></select>
+<div id="aiMessages" class="panel" role="log" aria-live="polite" aria-label="Chattmeddelanden" style="min-height:120px;max-height:350px;overflow-y:auto"></div>
+<label for="aiInput">Ditt meddelande</label>
+<textarea id="aiInput" maxlength="600" placeholder="Till exempel: Jag behöver hjälp att komma igång med städningen"></textarea>
+<div class="actions"><button type="button" id="aiSend">Skicka</button><button type="button" class="alt" id="aiClear">Rensa chatten</button></div>
+<p class="small">Den här demon fungerar utan internet. Riktig AI kräver senare en säker serveranslutning och tydligt samtycke för eventuellt minne.</p>
+</section></main><footer>Fokuskompisen 0.9 TEST 💜 · Sparar lokalt på enheten · Säkerhetskopiera regelbundet · Fungerar utan internet</footer>
 <script> const menuButton = document.getElementById("menuButton");
 const mainMenu = document.getElementById("mainMenu");
 const pages = {
@@ -353,6 +365,7 @@ const pages = {
   ideas: "ideasPage",
   reminders: "remindersPage",
     backup: "backupPage",
+  ai: "aiPage",
   settings: "settingsPage"
 };
   // 0.8: behåll navigeringen när webbläsaren växlar flik eller auth förnyas.
@@ -1394,4 +1407,37 @@ document.getElementById("saveNewPasswordButton").addEventListener("click", async
   }
 });
 
+
+// Fokuskompisen 0.9: offline-demo. Ingen AI-tjänst eller meddelandelagring.
+(function initAiDemo(){
+ const messages=document.getElementById('aiMessages');
+ const input=document.getElementById('aiInput');
+ const tone=document.getElementById('aiTone');
+ const length=document.getElementById('aiLength');
+ if(!messages || !input) return;
+ function addMessage(sender, content){
+   const row=document.createElement('p');
+   const label=document.createElement('strong');
+   label.textContent=sender+': ';
+   row.append(label,document.createTextNode(content));
+   messages.append(row);
+   messages.scrollTop=messages.scrollHeight;
+ }
+ function reply(message){
+   const m=message.toLocaleLowerCase('sv');
+   let steps;
+   if(/städ|städa|disk|tvätt|plocka/.test(m)) steps=['Välj en liten yta eller tre saker.','Gör bara den delen i två minuter.','Stanna upp och välj om du vill fortsätta eller vila.'];
+   else if(/plan|schema|tid|dag|stress/.test(m)) steps=['Välj en sak som är viktig för dig idag.','Dela den i ett första litet steg.','Lägg in en paus och lämna utrymme för ändringar.'];
+   else if(/trött|orkar|energi|jobbigt/.test(m)) steps=['Känn efter vad som är rimligt just nu.','Välj ett mycket litet steg eller vila.','Det räcker att börja där du är.'];
+   else steps=['Berätta vilken uppgift du vill ha hjälp med.','Vi kan dela upp den i små, hanterbara steg.','Du bestämmer själv takten.'];
+   const intro=tone.value==='clear'?'Ett konkret förslag:':tone.value==='peppy'?'Vi tar det steg för steg!':'Vi kan ta en liten sak i taget. 💜';
+   if(length.value==='short') return intro+' '+steps[0];
+   if(length.value==='long') return intro+' Här är en möjlig plan, som du gärna får anpassa: '+steps.map((x,i)=>(i+1)+'. '+x).join(' ')+' Du kan alltid ändra dig eller ta paus.';
+   return intro+' '+steps[0]+' '+steps[1];
+ }
+ function send(){const value=input.value.trim();if(!value)return;addMessage('Du',value);input.value='';addMessage('Demo-kompisen',reply(value));}
+ document.getElementById('aiSend').addEventListener('click',send);
+ document.getElementById('aiClear').addEventListener('click',()=>{messages.replaceChildren();addMessage('Demo-kompisen','Hej! Vad vill du ha hjälp med idag?');});
+ addMessage('Demo-kompisen','Hej! Vad vill du ha hjälp med idag?');
+})();
 </script></body></html>
