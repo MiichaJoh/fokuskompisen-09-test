@@ -406,6 +406,8 @@ body[data-theme="dark"] #routinesPage h3,body[data-theme="dark"] #routinesPage .
 .routine-edit09 .actions{margin-top:12px}
 body[data-theme="dark"] .routine-edit09{background:#383348;border-color:#a69abb;color:#f6f1ff}
 body[data-theme="dark"] .routine-edit09 input,body[data-theme="dark"] .routine-edit09 select,body[data-theme="dark"] .routine-edit09 textarea{background:#292534;color:#fff;border:1px solid #a69abb}
+button:focus-visible, textarea:focus-visible { outline:3px solid #68458e; outline-offset:3px; }
+#kickoffPage button { min-height:44px; }
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -424,7 +426,7 @@ body[data-theme="dark"] .routine-edit09 input,body[data-theme="dark"] .routine-e
   <button type="button" data-page="home">🏠 Startsida</button>
   <button type="button" data-page="schedule">📅 Mitt dagsschema</button><button type="button" data-page="daily">🌷 Min dag</button>
   <button type="button" data-page="tasks">✅ Mina uppgifter</button><button type="button" data-page="addTask">➕ Ny uppgift</button>
-  <button type="button" data-page="week">🗓️ Veckoplanering</button><button type="button" data-page="steps">👣 Små steg</button><button type="button" data-page="pause">☕ Pauskompis</button><button type="button" data-page="ideas">💡 Idébank</button>
+  <button type="button" data-page="week">🗓️ Veckoplanering</button><button type="button" data-page="kickoff">🌱 Hjälp mig komma igång</button><button type="button" data-page="steps">👣 Små steg</button><button type="button" data-page="pause">☕ Pauskompis</button><button type="button" data-page="ideas">💡 Idébank</button>
   <button type="button" data-page="routines">🌅 Mina rutiner</button><button type="button" data-page="reminders">🔔 Mina påminnelser</button>
   <button type="button" data-page="ai">💜 AI-kompisen (demo)</button><button type="button" data-page="settings">⚙️ Inställningar</button><button type="button" data-page="backup">💾 Säkerhetskopia</button>
 </nav><p>En sak i taget. Du bestämmer takten.</p></header>
@@ -492,6 +494,21 @@ body[data-theme="dark"] .routine-edit09 input,body[data-theme="dark"] .routine-e
 <section id="tasksPage"><h2>📝 Mina uppgifter</h2><div id="tasks"></div></section><section id="dailyPage"><h2>🌷 Min dag</h2><div id="daily"></div></section>
   <section id="schedule"><h2>📅 Mitt dagsschema</h2><button type="button" id="addScheduleActivity">➕ Lägg till aktivitet</button><div id="scheduleActivities"></div></section>
   <section id="weekPage"><h2>🗓️ Veckans överblick</h2><div class="week" id="week"></div></section>
+<section id="kickoffPage" hidden aria-labelledby="kickoffHeading">
+<h2 id="kickoffHeading">🌱 Hjälp mig komma igång</h2>
+<p>En liten sak i taget. Du bestämmer när det räcker.</p>
+<p class="small">Gratis stöd med färdiga förslag, utan AI. Fungerar offline när appen har laddats på enheten.</p>
+<form id="kickoffForm"><label for="kickoffInput">Vad vill du ha hjälp att börja med?</label>
+<textarea id="kickoffInput" maxlength="300" required placeholder="Till exempel: Städa sovrummet" aria-describedby="kickoffHint"></textarea>
+<p id="kickoffHint" class="small">Förslagen är enkla och kan behöva anpassas. Skriv gärna en uppgift i taget.</p>
+<button type="submit">Visa ett litet första steg</button></form>
+<div id="kickoffResult" hidden class="panel" style="color:#30263b" role="status" aria-live="polite" aria-atomic="true">
+<p id="kickoffTask" style="overflow-wrap:anywhere"></p><p id="kickoffProgress" class="small"></p><p id="kickoffStep" style="font-size:1.15em"></p>
+</div><div id="kickoffActions" hidden class="actions">
+<button type="button" id="kickoffNext">Nästa steg</button><button type="button" id="kickoffPause" class="alt">Ta paus</button><button type="button" id="kickoffDone" class="alt">Jag är klar</button></div>
+<p id="kickoffStorage" class="small" role="status"></p>
+<p class="small">Påbörjad hjälp sparas bara för ditt konto i den här webbläsaren. Den ingår inte i säkerhetskopian och ändrar inte dina uppgifter eller rutiner.</p>
+</section>
 <section id="stepsPage"><h2>👣 Små steg</h2><label for="choose">Välj en uppgift</label><select id="choose"></select><div id="steps" class="panel">Välj en uppgift för att få hjälp med små steg.</div></section>
 <section id="pausePage"><h2>☕ Pauskompis</h2><p>En paus är också viktig. Starta en paus på 20 minuter när du vill.</p><div id="clock">20:00</div><button id="start">Starta paus</button><button class="alt" id="stop">Stoppa och återställ</button><p id="pause" class="panel">Du bestämmer när du är redo igen.</p></section>
 <section id="backupPage"><h2>💾 Säkerhetskopia</h2><p>Exportera dina uppgifter till en JSON-fil innan du uppdaterar eller byter mobil. Förvara filen privat – den kan innehålla personliga uppgifter.</p><div class="actions"><button type="button" id="export">Ladda ner säkerhetskopia</button><label for="import" class="alt" tabindex="0" style="display:inline-block;padding:10px;border-radius:9px;cursor:pointer">Välj säkerhetskopia</label><input type="file" id="import" accept=".json,application/json" style="max-width:240px"></div><p class="notice warning">Import ersätter uppgifterna på det inloggade kontot efter synkronisering. Exportera gärna en kopia först. Du får bekräfta innan något ändras.</p><p id="status" role="status"></p><div class="panel" id="syncPanel"><h3>☁️ Mina uppgifter på mitt konto</h3><p id="syncStatus" role="status" aria-live="polite">Kontrollerar synkronisering…</p><button type="button" id="migrateTasks" hidden>📥 Kopiera mina tidigare uppgifter till kontot</button><p class="small">Dina tidigare lokala uppgifter raderas inte. Behåll din JSON-säkerhetskopia.</p></div></section>
@@ -584,6 +601,7 @@ const pages = {
   addTask: "addTaskPage",
   week: "weekPage",
   steps: "stepsPage",
+  kickoff: "kickoffPage",
   pause: "pausePage",
   ideas: "ideasPage",
   routines: "routinesPage",
@@ -1788,4 +1806,79 @@ if (backupPickerLabel) backupPickerLabel.addEventListener('keydown', event => {
  document.getElementById('aiClear').addEventListener('click',()=>{messages.replaceChildren();addMessage('Demo-kompisen','Hej! Vad vill du ha hjälp med idag?');});
  addMessage('Demo-kompisen','Hej! Vad vill du ha hjälp med idag?');
 })();
+
+// 0.9: Fristående offlinehjälp. Rör aldrig kontoobjekt, rutiner eller tidigare nycklar.
+(() => {
+  const el = id => document.getElementById(id);
+  const page = el('kickoffPage'), input = el('kickoffInput');
+  const rules = [
+    [/diskmaskin|diska|disk(?:en|$|\s)/i, ['Ställ en kopp eller tallrik vid diskhon.', 'Diska den saken eller ställ den i diskmaskinen.', 'Ta en sak till om du vill.']],
+    [/tvätta.*(?:hår|händer)|duscha/i, ['Ta fram en handduk.', 'Ta fram det du brukar använda för att tvätta dig.', 'Börja när du känner dig redo.']],
+    [/tvätt|tvätta kläder/i, ['Lägg ett plagg som behöver tvättas i tvättkorgen.', 'Samla två plagg till om du orkar.', 'Välj en liten omgång och följ plaggens tvättråd.']],
+    [/handla|inköp|köpa mat/i, ['Skriv ner en sak du behöver köpa.', 'Lägg till det viktigaste som saknas hemma.', 'Välj hur du vill handla: i butik, beställa eller be om hjälp.']],
+    [/laga mat|middag|lunch|frukost|baka/i, ['Välj en enkel maträtt eller ett recept.', 'Ta fram en ingrediens.', 'Läs och gör receptets första moment.']],
+    [/bädda/i, ['Lägg en kudde åt sidan på sängen.', 'Rätta till täcket en liten bit.', 'Lägg tillbaka kudden om du vill.']],
+    [/dammsug/i, ['Ta fram dammsugaren.', 'Gör plats på en liten bit av golvet.', 'Dammsug bara den lilla ytan först.']],
+    [/sovrum|städa|städ|plocka undan/i, ['Välj en sak som ligger framme där du vill städa.', 'Lägg den saken på sin plats. Om den saknar plats, lägg den åt sidan.', 'Plocka undan två saker till om du vill.']],
+    [/ringa|telefonsamtal/i, ['Skriv en mening om vad du vill säga eller fråga.', 'Ta fram numret du vill ringa.', 'Ring när du är redo och ha meningen framför dig.']],
+    [/mejl|mail|meddelande|brev/i, ['Öppna ett tomt utkast till ditt meddelande.', 'Skriv en mening om vad du vill säga.', 'Läs igenom och välj själv om du vill fortsätta eller skicka.']],
+    [/läxa|plugga|studera|skolarbete|läsa/i, ['Öppna materialet du behöver.', 'Välj en fråga eller ett kort stycke.', 'Läs eller arbeta med bara den delen först.']],
+    [/promenad|gå ut/i, ['Ta fram skorna du vill använda.', 'Ta på dig det du behöver för vädret.', 'Gå ut en kort stund om det passar dig.']],
+    [/räkning|faktura/i, ['Ta fram en räkning.', 'Titta på förfallodatumet.', 'Välj om du vill betala nu eller planera när du ska göra det.']]
+  ];
+  function makeSteps(text) {
+    const match = rules.find(([pattern]) => pattern.test(text));
+    return match ? {steps:match[1], known:true} : {known:false, steps:[
+      'Skriv eller tänk ut den allra minsta delen av uppgiften: ”' + text + '”.',
+      'Ta fram en sak som behövs för just den delen.',
+      'Prova den lilla delen en kort stund. Du får stanna när du vill.'
+    ]};
+  }
+  let owner = null, draft = {};
+  const key = () => 'fokuskompisen09-kickoff:' + owner;
+  function syncOwner() {
+    const id = activeUserId || null;
+    if (owner === id) return;
+    owner = id; draft = {}; input.value = '';
+    if (owner) try {
+      const saved = JSON.parse(localStorage.getItem(key()) || '{}');
+      if (typeof saved.text === 'string') draft.text = saved.text.slice(0,300);
+      if (typeof saved.task === 'string' && ['active','paused','done'].includes(saved.mode)) {
+        draft.task=saved.task.slice(0,300); draft.mode=saved.mode;
+        draft.index=Number.isInteger(saved.index) ? Math.max(0,Math.min(2,saved.index)) : 0;
+      }
+    } catch (_) { el('kickoffStorage').textContent='Kunde inte läsa tidigare hjälp. Du kan börja på nytt.'; }
+    input.value = draft.text || '';
+  }
+  function persist() {
+    if (!owner) return;
+    try { localStorage.setItem(key(),JSON.stringify(draft)); el('kickoffStorage').textContent=''; }
+    catch (_) { el('kickoffStorage').textContent='Kunde inte spara på enheten. Låt sidan vara öppen om du vill behålla hjälpen.'; }
+  }
+  function render() {
+    syncOwner();
+    const exists=Boolean(draft.task), done=draft.mode==='done', paused=draft.mode==='paused';
+    el('kickoffResult').hidden=!exists; el('kickoffActions').hidden=!exists || done;
+    if (!exists) return;
+    const plan=makeSteps(draft.task), index=draft.index || 0;
+    el('kickoffTask').textContent=draft.task;
+    el('kickoffProgress').textContent=done ? 'Avslutat för nu' : 'Steg '+(index+1)+' av '+plan.steps.length+(plan.known?'':' · Allmänt förslag');
+    el('kickoffStep').textContent=done ? 'Du har valt att avsluta för nu. Det du gjort får räcka. Du kan börja igen när du vill.' : paused ? 'Ta den tid du behöver. Ditt steg finns kvar när du vill fortsätta.' : plan.steps[index];
+    el('kickoffNext').hidden=!paused && index===plan.steps.length-1;
+    el('kickoffNext').textContent=paused?'Fortsätt med samma steg':'Nästa steg';
+    el('kickoffPause').hidden=paused;
+  }
+  input.addEventListener('input',()=>{syncOwner(); draft.text=input.value; input.setCustomValidity(''); persist();});
+  el('kickoffForm').addEventListener('submit',event=>{
+    event.preventDefault(); syncOwner(); const text=input.value.trim();
+    if (!text) { input.setCustomValidity('Skriv vad du vill ha hjälp med.'); input.reportValidity(); return; }
+    draft={text:input.value,task:text,index:0,mode:'active'};persist();render();
+  });
+  el('kickoffNext').onclick=()=>{syncOwner(); if(!draft.task)return; if(draft.mode==='paused')draft.mode='active';else draft.index=Math.min(2,(draft.index||0)+1);persist();render();};
+  el('kickoffPause').onclick=()=>{syncOwner();if(!draft.task)return;draft.mode='paused';persist();render();};
+  el('kickoffDone').onclick=()=>{syncOwner();if(!draft.task)return;draft.mode='done';persist();render();};
+  new MutationObserver(()=>{if(!page.hidden)render();}).observe(page,{attributes:true,attributeFilter:['hidden']});
+  render();
+})();
+
 </script></body></html>
