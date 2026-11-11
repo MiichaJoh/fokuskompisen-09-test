@@ -400,6 +400,12 @@ body[data-theme="dark"] #aiPage button {
 body[data-theme="dark"] #routinesPage .panel{background:#444158;color:#f1edf8}
 body[data-theme="dark"] #routinesPage .routine-step09{border-color:#817a9b}
 body[data-theme="dark"] #routinesPage h3,body[data-theme="dark"] #routinesPage .small{color:#f1edf8}
+.routine-edit09{margin:12px 0;padding:14px;border:1px solid #b6a4d0;border-radius:12px}
+.routine-edit09 label{display:block;margin-top:10px}
+.routine-edit09 input,.routine-edit09 select,.routine-edit09 textarea{width:100%;box-sizing:border-box}
+.routine-edit09 .actions{margin-top:12px}
+body[data-theme="dark"] .routine-edit09{background:#383348;border-color:#a69abb;color:#f6f1ff}
+body[data-theme="dark"] .routine-edit09 input,body[data-theme="dark"] .routine-edit09 select,body[data-theme="dark"] .routine-edit09 textarea{background:#292534;color:#fff;border:1px solid #a69abb}
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1310,11 +1316,47 @@ function renderRoutines09(){
      const span=document.createElement("span");span.textContent=step.text;label.append(input,span);article.append(label);
    }
    const actions=document.createElement("div");actions.className="actions";
+   const edit=document.createElement("button");edit.type="button";edit.className="alt";edit.textContent="✏️ Redigera";
+   edit.addEventListener("click",()=>{
+     const existing=article.querySelector(".routine-edit09");if(existing){existing.remove();return;}
+     const editor=document.createElement("div");editor.className="routine-edit09";
+     function field(labelText,tag,id,value){const label=document.createElement("label");label.htmlFor=id;label.textContent=labelText;const control=document.createElement(tag);control.id=id;control.value=value;editor.append(label,control);return control;}
+     const prefix="routine-edit-"+String(routine.id).replace(/[^a-zA-Z0-9_-]/g,"-");
+     const nameInput=field("Namn på rutinen","input",prefix+"-name",routine.name);nameInput.maxLength=80;
+     const typeInput=document.createElement("select");typeInput.id=prefix+"-type";
+     for(const [value,label] of [["morning","🌅 Morgon"],["evening","🌙 Kväll"],["other","🌷 Annan rutin"]]){const option=document.createElement("option");option.value=value;option.textContent=label;typeInput.append(option);}
+     typeInput.value=routine.type;
+     const typeLabel=document.createElement("label");typeLabel.htmlFor=typeInput.id;typeLabel.textContent="När passar den?";editor.append(typeLabel,typeInput);
+     const stepsInput=field("Steg – ett per rad (flytta rader för att ändra ordning, ta bort rad för att ta bort steg)","textarea",prefix+"-steps",routine.steps.map(x=>x.text).join("\n"));stepsInput.rows=Math.max(4,Math.min(12,routine.steps.length+1));stepsInput.maxLength=3600;
+     const feedback=document.createElement("p");feedback.className="small";feedback.setAttribute("role","status");editor.append(feedback);
+     const buttons=document.createElement("div");buttons.className="actions";
+     const saveEdit=document.createElement("button");saveEdit.type="button";saveEdit.textContent="💾 Spara ändringar";
+     saveEdit.addEventListener("click",()=>{
+       if(!activeUserId||!syncReady){feedback.textContent="Vänta tills kontot har laddats.";return;}
+       const newName=nameInput.value.trim();const texts=stepsInput.value.split(/\r?\n/).map(t=>t.trim()).filter(Boolean);
+       if(!newName||!texts.length){feedback.textContent="Skriv ett namn och minst ett steg.";return;}
+       if(texts.length>30||texts.some(t=>t.length>120)){feedback.textContent="Högst 30 steg och 120 tecken per steg.";return;}
+       const old=JSON.stringify(routine);const unused=[...routine.steps];
+       const nextSteps=texts.map((t,i)=>{
+         let pos=unused.findIndex(step=>step.text===t);
+         // Behåll ett befintligt stegs ID även om texten ändras på samma rad.
+         if(pos<0 && i<routine.steps.length)pos=unused.findIndex(step=>step.id===routine.steps[i].id);
+         const matched=pos>=0?unused.splice(pos,1)[0]:null;
+         return {id:matched?matched.id:routineId09(),text:t};
+       });
+       routine.name=newName;routine.type=typeInput.value;routine.steps=nextSteps;
+       routine.checkedIds=(routine.checkedIds||[]).filter(id=>nextSteps.some(step=>step.id===id));
+       if(!save()){Object.assign(routine,JSON.parse(old));feedback.textContent="Det gick inte att spara. Försök igen.";return;}
+       $("routineStatus").textContent="Ändringarna har sparats 💜";renderRoutines09();
+     });
+     const cancel=document.createElement("button");cancel.type="button";cancel.className="alt";cancel.textContent="Avbryt";cancel.addEventListener("click",()=>editor.remove());
+     buttons.append(saveEdit,cancel);editor.append(buttons);actions.before(editor);nameInput.focus();
+   });
    const reset=document.createElement("button");reset.type="button";reset.className="alt";reset.textContent="↩ Börja om idag";
    reset.addEventListener("click",()=>{if(!confirm("Börja om med denna rutins steg idag?"))return;const oldDate=routine.checkedDate,oldIds=routine.checkedIds;routine.checkedDate=routineToday09();routine.checkedIds=[];if(!save()){routine.checkedDate=oldDate;routine.checkedIds=oldIds;}renderRoutines09();});
    const del=document.createElement("button");del.type="button";del.className="alt";del.textContent="🗑️ Ta bort rutin";
    del.addEventListener("click",()=>{if(!confirm("Ta bort rutinen ”"+routine.name+"”?"))return;const old=state.routines;state.routines=old.filter(r=>r.id!==routine.id);if(!save())state.routines=old;renderRoutines09();});
-   actions.append(reset,del);article.append(actions);host.append(article);
+   actions.append(edit,reset,del);article.append(actions);host.append(article);
  }
 }
 $("routineAdd").addEventListener("click",()=>{
