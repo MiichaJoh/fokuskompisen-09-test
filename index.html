@@ -408,6 +408,14 @@ body[data-theme="dark"] .routine-edit09{background:#383348;border-color:#a69abb;
 body[data-theme="dark"] .routine-edit09 input,body[data-theme="dark"] .routine-edit09 select,body[data-theme="dark"] .routine-edit09 textarea{background:#292534;color:#fff;border:1px solid #a69abb}
 button:focus-visible, textarea:focus-visible { outline:3px solid #68458e; outline-offset:3px; }
 #kickoffPage button { min-height:44px; }
+
+/* Bildstöd 0.9: stora, diskreta symboler utan externa bildfiler. */
+.visual09{display:inline-flex;align-items:center;justify-content:center;min-width:2.15em;min-height:2.15em;margin-right:.55em;padding:.12em;border-radius:12px;background:#f0e9fa;border:1px solid #d8c9ea;font-size:1.2em;vertical-align:middle;flex-shrink:0}
+.visual09[hidden]{display:none!important}
+.visual09-row{display:flex;align-items:center;gap:4px;overflow-wrap:anywhere}
+body[data-theme="dark"] .visual09{background:#e9e0f5;color:#30263b;border-color:#c2afd9}
+#visual09Setting{width:22px;height:22px;vertical-align:middle}
+#visual09SettingLabel{display:flex;align-items:center;gap:10px;margin:12px 0}
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -562,6 +570,7 @@ button:focus-visible, textarea:focus-visible { outline:3px solid #68458e; outlin
 </label>
 
   <p>Här kommer du att kunna anpassa Fokuskompisen efter dina behov.</p>
+    <div class="panel" id="visual09SettingsPanel"><h3>🖼️ Bildstöd</h3><label id="visual09SettingLabel" for="visual09Setting"><input id="visual09Setting" type="checkbox" checked> Visa symboler vid uppgifter och rutiner</label><p class="small">Symboler visas även i Hjälp mig komma igång. Du kan stänga av dem när du vill. Inställningen sparas på denna enhet för ditt konto. Ingen AI eller uppkoppling behövs.</p></div>
     <h3>🎨 Välj färgtema</h3>
 
 <label for="themeSelect">Mitt färgtema:</label>
@@ -633,6 +642,7 @@ const pages = {
   function showPage(page) {
   if (!Object.hasOwn(pages,page)) page = "home";
   currentPage08 = page;
+  if(typeof visual09Sync==="function")visual09Sync();
   rememberNav08({page});
   Object.values(pages).forEach(id => {
     const section = document.getElementById(id);
@@ -764,7 +774,7 @@ const safeState = value => value && typeof value === "object" && Array.isArray(v
 function drawAccountState() {
   $("name").value = state.name || "";
   $("feeling").value = state.feeling || "";
-  greeting(); energy(); render(); renderRoutines09();
+  greeting(); energy(); render(); renderRoutines09(); visual09Sync();
 }
 function queueSync() {
   if (!activeUserId || !syncReady) return;
@@ -967,6 +977,48 @@ function openTaskSteps08(taskId) {
 }
 // 0.9: Avklarade uppgifter, helt baserat på kontots befintliga state.
 // Datum registreras först vid nya avbockningar; äldre data ges inte påhittade datum.
+// Bildstöd 0.9 – endast visning. Ändrar inte state, uppgifter eller rutiner.
+const visual09StoragePrefix="fokuskompisen09-visual-prefs:";
+function visual09Key(){return visual09StoragePrefix+String(activeUserId||"guest");}
+function visual09Enabled(){try{return localStorage.getItem(visual09Key())!=="off";}catch(_){return true;}}
+function visual09Sync(){const input=document.getElementById("visual09Setting");if(input)input.checked=visual09Enabled();document.querySelectorAll(".visual09").forEach(icon=>{icon.hidden=!visual09Enabled();});}
+function visual09Symbol(text){
+ const s=String(text||"").toLocaleLowerCase("sv-SE");
+ const patterns=[
+  [/borsta.*tänd|tandborst|tänder/,"🪥"],
+  [/bädda|säng|sovrum|lägga sig|vakna/,"🛏️"],
+  [/disk|tallrik|kopp|bestick/,"🍽️"],
+  [/tvätt|kläder|tvättmaskin|strumpor/,"👕"],
+  [/städ|plocka undan|plocka upp|dammsug|golv|städa/,"🧹"],
+  [/sopor|skräp|släng/,"🗑️"],
+  [/handla|köp|affär|butik|matinköp/,"🛒"],
+  [/laga mat|frukost|lunch|middag|äta|måltid/,"🥣"],
+  [/dricka|vatten|glas/,"🥤"],
+  [/dusch|bada|tvätta händer|hygien/,"🚿"],
+  [/medicin|tablett/,"💊"],
+  [/promenad|gå ut|utomhus|motion/,"🚶"],
+  [/skola|läxa|plugga|läsa|bok/,"📖"],
+  [/skriv|mejl|brev|meddelande/,"✏️"],
+  [/ringa|telefon|samtal/,"📞"],
+  [/jobb|arbete|möte/,"💼"],
+  [/vila|paus|andas|återhämt/,"☕"],
+  [/sortera|ordna|organisera/,"📦"]
+ ];
+ const found=patterns.find(([re])=>re.test(s));
+ return found?found[1]:"🌱";
+}
+function visual09Decorate(target,text){
+ if(!target || target.querySelector(":scope > .visual09"))return;
+ const icon=document.createElement("span");icon.className="visual09";
+ icon.setAttribute("aria-hidden","true");icon.textContent=visual09Symbol(text);
+ icon.hidden=!visual09Enabled();target.prepend(icon);
+}
+document.getElementById("visual09Setting").addEventListener("change",event=>{
+ try{localStorage.setItem(visual09Key(),event.target.checked?"on":"off");}
+ catch(_){ /* inställningen fungerar tills sidan stängs */ }
+ visual09Sync();
+});
+
 function renderProgress09(){
  const todayEl=$("progressToday"),weekEl=$("progressWeek"),daysEl=$("progressDays"),itemsEl=$("progressItems");
  if(!todayEl||!weekEl||!daysEl||!itemsEl)return;
@@ -1027,6 +1079,7 @@ updateHomeReminders();
     items.forEach(t=>{
     const div=document.createElement("div");div.className="panel"+(t.done?" done":"");
     div.innerHTML='<strong>'+esc(t.name)+'</strong><p class="small">'+esc(question(t.name))+'</p><div class="flex"><div><label>Prioritet</label><select class="p">'+Object.entries(priorities).map(([k,v])=>'<option value="'+k+'" '+(t.priority===k?"selected":"")+'>'+v+'</option>').join("")+'</select></div><div><label>Datum</label><input class="d" type="date" value="'+esc(t.date||"")+'"></div><div><label>Upprepning</label><select class="r">'+Object.entries(repeats).map(([k,v])=>'<option value="'+k+'" '+((t.repeat||"none")===k?"selected":"")+'>'+v+'</option>').join("")+'</select></div><div><label>Påminnelse i appen</label><input class="time" type="time" value="'+esc(t.remind||"")+'"></div></div><div class="actions"><button class="alt donebtn">'+(t.done?"Ångra klar":"Markera klar")+'</button><button class="alt editbtn">✏️ Redigera</button><button class="alt del">Ta bort</button></div>';
+        visual09Decorate(div.querySelector("strong"),t.name);
         div.querySelector(".editbtn").onclick=()=>{
       const nyttNamn=prompt("Ändra uppgiftens namn:",t.name);
       if(nyttNamn===null)return;
@@ -1380,7 +1433,7 @@ function renderRoutines09(){
        routine.checkedDate=routineToday09();routine.checkedIds=[...current];
        if(!save())Object.assign(routine,JSON.parse(before));renderRoutines09();
      });
-     const span=document.createElement("span");span.textContent=step.text;label.append(input,span);article.append(label);
+     const span=document.createElement("span");span.textContent=step.text;label.append(input,span);visual09Decorate(span,step.text);article.append(label);
    }
    const actions=document.createElement("div");actions.className="actions";
    const edit=document.createElement("button");edit.type="button";edit.className="alt";edit.textContent="✏️ Redigera";
@@ -1909,6 +1962,7 @@ if (backupPickerLabel) backupPickerLabel.addEventListener('keydown', event => {
     el('kickoffTask').textContent=draft.task;
     el('kickoffProgress').textContent=done ? 'Avslutat för nu' : 'Steg '+(index+1)+' av '+plan.steps.length+(plan.known?'':' · Allmänt förslag');
     el('kickoffStep').textContent=done ? 'Du har valt att avsluta för nu. Det du gjort får räcka. Du kan börja igen när du vill.' : paused ? 'Ta den tid du behöver. Ditt steg finns kvar när du vill fortsätta.' : plan.steps[index];
+    if(!done && !paused) visual09Decorate(el('kickoffStep'),plan.steps[index]);
     el('kickoffNext').hidden=!paused && index===plan.steps.length-1;
     el('kickoffNext').textContent=paused?'Fortsätt med samma steg':'Nästa steg';
     el('kickoffPause').hidden=paused;
