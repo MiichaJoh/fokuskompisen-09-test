@@ -1328,13 +1328,15 @@ function renderRoutines09(){
      typeInput.value=routine.type;
      const typeLabel=document.createElement("label");typeLabel.htmlFor=typeInput.id;typeLabel.textContent="När passar den?";editor.append(typeLabel,typeInput);
      const stepsInput=field("Steg – ett per rad (flytta rader för att ändra ordning, ta bort rad för att ta bort steg)","textarea",prefix+"-steps",routine.steps.map(x=>x.text).join("\n"));stepsInput.rows=Math.max(4,Math.min(12,routine.steps.length+1));stepsInput.maxLength=3600;
-     const feedback=document.createElement("p");feedback.className="small";feedback.setAttribute("role","status");editor.append(feedback);
+     const feedback=document.createElement("p");feedback.className="small";feedback.setAttribute("role","alert");editor.append(feedback);
      const buttons=document.createElement("div");buttons.className="actions";
      const saveEdit=document.createElement("button");saveEdit.type="button";saveEdit.textContent="💾 Spara ändringar";
      saveEdit.addEventListener("click",()=>{
        if(!activeUserId||!syncReady){feedback.textContent="Vänta tills kontot har laddats.";return;}
        const newName=nameInput.value.trim();const texts=stepsInput.value.split(/\r?\n/).map(t=>t.trim()).filter(Boolean);
-       if(!newName||!texts.length){feedback.textContent="Skriv ett namn och minst ett steg.";return;}
+       if(!newName){feedback.textContent="Du måste skriva ett namn på rutinen.";nameInput.setAttribute("aria-invalid","true");nameInput.focus();return;}
+       nameInput.removeAttribute("aria-invalid");
+       if(!texts.length){feedback.textContent="Rutinen måste ha minst ett steg.";stepsInput.focus();return;}
        if(texts.length>30||texts.some(t=>t.length>120)){feedback.textContent="Högst 30 steg och 120 tecken per steg.";return;}
        const old=JSON.stringify(routine);const unused=[...routine.steps];
        const nextSteps=texts.map((t,i)=>{
