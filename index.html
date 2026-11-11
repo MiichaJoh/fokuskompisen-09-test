@@ -392,6 +392,14 @@ body[data-theme="dark"] #aiPage button {
   color: #ffffff !important;
 }
 
+/* Mina rutiner: tillgänglig layout i både ljust och mörkt tema */
+.routine-card09 progress{display:block;width:100%;height:15px;accent-color:var(--theme-accent);margin:8px 0 15px}
+.routine-step09{display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid #d9c8e8;cursor:pointer}
+.routine-step09 input{width:22px;height:22px;flex-shrink:0;accent-color:var(--theme-accent)}
+.routine-step09 span{overflow-wrap:anywhere}.routine-step09 input:checked+span{text-decoration:line-through;opacity:.75}
+body[data-theme="dark"] #routinesPage .panel{background:#444158;color:#f1edf8}
+body[data-theme="dark"] #routinesPage .routine-step09{border-color:#817a9b}
+body[data-theme="dark"] #routinesPage h3,body[data-theme="dark"] #routinesPage .small{color:#f1edf8}
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -411,7 +419,7 @@ body[data-theme="dark"] #aiPage button {
   <button type="button" data-page="schedule">📅 Mitt dagsschema</button><button type="button" data-page="daily">🌷 Min dag</button>
   <button type="button" data-page="tasks">✅ Mina uppgifter</button><button type="button" data-page="addTask">➕ Ny uppgift</button>
   <button type="button" data-page="week">🗓️ Veckoplanering</button><button type="button" data-page="steps">👣 Små steg</button><button type="button" data-page="pause">☕ Pauskompis</button><button type="button" data-page="ideas">💡 Idébank</button>
-  <button type="button" data-page="reminders">🔔 Mina påminnelser</button>
+  <button type="button" data-page="routines">🌅 Mina rutiner</button><button type="button" data-page="reminders">🔔 Mina påminnelser</button>
   <button type="button" data-page="ai">💜 AI-kompisen (demo)</button><button type="button" data-page="settings">⚙️ Inställningar</button><button type="button" data-page="backup">💾 Säkerhetskopia</button>
 </nav><p>En sak i taget. Du bestämmer takten.</p></header>
       <main>
@@ -461,6 +469,19 @@ body[data-theme="dark"] #aiPage button {
 </div>
     </section>
     <section id="addTaskPage"><h2>➕ Ny uppgift</h2><form id="add"><label for="task">Vad vill du göra?</label><input id="task" required maxlength="150" placeholder="Till exempel handla mat"><div class="flex"><div><label for="date">Datum (frivilligt)</label><input type="date" id="date"></div><div><label for="priority">Din prioritet</label><select id="priority"><option value="today">Måste göras idag</option><option value="soon">Bra om det blir gjort</option><option value="later">Kan vänta</option></select></div></div><div class="flex"><div><label for="repeat">Upprepa</label><select id="repeat"><option value="none">Inte återkommande</option><option value="daily">Varje dag</option><option value="weekly">Varje vecka</option></select></div><div><label for="remind">Påminn mig i appen (frivilligt)</label><input type="time" id="remind"></div></div><button>Lägg till</button></form><p class="small">Du bestämmer vad som är viktigast. Fokuskompisen bestämmer aldrig åt dig.</p></section>
+<section id="routinesPage" hidden>
+<h2>🌅 Mina rutiner</h2>
+<p>Gör vardagen enklare med små steg. Bocka av i din egen takt. Stegen börjar om nästa dag, men rutinerna finns kvar.</p>
+<div class="panel" id="routineCreatePanel">
+<h3>Skapa en rutin</h3>
+<label for="routineName">Namn på rutinen</label><input id="routineName" maxlength="80" placeholder="Till exempel: Min morgonrutin">
+<label for="routineType">När passar den?</label><select id="routineType"><option value="morning">🌅 Morgon</option><option value="evening">🌙 Kväll</option><option value="other">🌷 Annan rutin</option></select>
+<label for="routineSteps">Steg – skriv ett steg per rad</label><textarea id="routineSteps" rows="5" maxlength="1500" placeholder="Gå upp ur sängen&#10;Borsta tänderna&#10;Äta frukost"></textarea>
+<button type="button" id="routineAdd">➕ Spara rutin</button><p id="routineStatus" role="status" aria-live="polite" class="small"></p>
+</div>
+<div id="routineList" aria-live="polite"></div>
+<p class="small">Rutinerna sparas med ditt konto och ingår i Fokuskompisens JSON-säkerhetskopia. Inga påminnelser skickas när appen är stängd.</p>
+</section>
 <section id="remindersPage"><h2>🔔 Mina påminnelser</h2><p class="small">Påminnelser visas när appen är öppen. Inga pushnotiser skickas när appen är stängd.</p><div id="reminders" aria-live="polite"></div></section>
 <section id="tasksPage"><h2>📝 Mina uppgifter</h2><div id="tasks"></div></section><section id="dailyPage"><h2>🌷 Min dag</h2><div id="daily"></div></section>
   <section id="schedule"><h2>📅 Mitt dagsschema</h2><button type="button" id="addScheduleActivity">➕ Lägg till aktivitet</button><div id="scheduleActivities"></div></section>
@@ -559,6 +580,7 @@ const pages = {
   steps: "stepsPage",
   pause: "pausePage",
   ideas: "ideasPage",
+  routines: "routinesPage",
   reminders: "remindersPage",
     backup: "backupPage",
   ai: "aiPage",
@@ -688,7 +710,7 @@ soundVolume.addEventListener("input", () => {
 });
 
     // Isolerad testlagring, rör inte version 0.6
-const EMPTY={name:"",feeling:"",energy:"",tasks:[]};
+const EMPTY={name:"",feeling:"",energy:"",tasks:[],routines:[]};
 let state=JSON.parse(JSON.stringify(EMPTY));
 let storageOk=true;
 try{
@@ -709,7 +731,7 @@ const safeState = value => value && typeof value === "object" && Array.isArray(v
 function drawAccountState() {
   $("name").value = state.name || "";
   $("feeling").value = state.feeling || "";
-  greeting(); energy(); render();
+  greeting(); energy(); render(); renderRoutines09();
 }
 function queueSync() {
   if (!activeUserId || !syncReady) return;
@@ -1245,15 +1267,71 @@ $("import").onchange=async e=>{
     const data=incoming&&incoming.app==="Fokuskompisen"?incoming.data:incoming;
     if(!data||typeof data!=="object"||!Array.isArray(data.tasks)||data.tasks.length>5000||data.tasks.some(t=>!t||typeof t.name!=="string"||t.name.length>150||!["today","soon","later"].includes(t.priority)||typeof t.id!=="string"&&typeof t.id!=="number"))throw Error("Filen har inte ett giltigt Fokuskompisen-format.");
     if(!confirm("Importen ersätter alla uppgifter och inställningar på den här enheten. Har du sparat en säkerhetskopia? Vill du fortsätta?"))return;
-    const next={...EMPTY,name:String(data.name||"").slice(0,100),feeling:String(data.feeling||"").slice(0,5000),energy:String(data.energy||""),tasks:data.tasks.map(t=>({...t,name:t.name.slice(0,150),repeat:["none","daily","weekly"].includes(t.repeat)?t.repeat:"none",remind:/^([01]\d|2[0-3]):[0-5]\d$/.test(t.remind||"")?t.remind:""}))};
+    const validRoutines = Array.isArray(data.routines) ? data.routines.slice(0,100).filter(r => r && typeof r.name === "string" && Array.isArray(r.steps) && r.steps.length <= 30).map(r => ({
+      id: String(r.id || "r-" + Date.now() + "-" + Math.random()), name:r.name.slice(0,80), type:["morning","evening","other"].includes(r.type)?r.type:"other",
+      steps:r.steps.filter(x=>x && typeof x.text==="string").slice(0,30).map(x=>({id:String(x.id || "s-"+Math.random()),text:x.text.slice(0,120)})),
+      checkedDate:typeof r.checkedDate==="string"?r.checkedDate:"", checkedIds:Array.isArray(r.checkedIds)?r.checkedIds.map(String).slice(0,30):[]
+    })) : [];
+    const next={...EMPTY,routines:validRoutines,name:String(data.name||"").slice(0,100),feeling:String(data.feeling||"").slice(0,5000),energy:String(data.energy||""),tasks:data.tasks.map(t=>({...t,name:t.name.slice(0,150),repeat:["none","daily","weekly"].includes(t.repeat)?t.repeat:"none",remind:/^([01]\d|2[0-3]):[0-5]\d$/.test(t.remind||"")?t.remind:""}))};
     const prev=state;state=next;
     if(!save()){state=prev;throw Error("Det gick inte att spara importen.")}
-    $("name").value=state.name;$("feeling").value=state.feeling;greeting();energy();render();
+    $("name").value=state.name;$("feeling").value=state.feeling;greeting();energy();render();renderRoutines09();
     $("status").textContent="Importen är klar. Kontrollera dina uppgifter.";
   }catch(err){$("status").textContent="Importen misslyckades: "+err.message}
   finally{e.target.value=""}
 };
 greeting();energy();render();
+// Fokuskompisen 0.9 – Mina rutiner. Ingår i kontots state och JSON-säkerhetskopian.
+const routineId09 = () => (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now())+"-"+Math.random().toString(36).slice(2);
+const routineToday09 = () => { const d=new Date(); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-"); };
+function renderRoutines09(){
+ const host=$("routineList"); if(!host)return;
+ host.replaceChildren();
+ const routines=Array.isArray(state.routines)?state.routines:[];
+ if(!routines.length){const p=document.createElement("p");p.className="notice";p.textContent="Du har inga rutiner ännu. Skapa din första rutin ovan 💜";host.append(p);return;}
+ for(const routine of routines){
+   if(!routine || !Array.isArray(routine.steps))continue;
+   const today=routineToday09();
+   const checked=new Set(routine.checkedDate===today && Array.isArray(routine.checkedIds)?routine.checkedIds:[]);
+   const article=document.createElement("article");article.className="panel routine-card09";
+   const heading=document.createElement("h3");heading.textContent=({morning:"🌅 ",evening:"🌙 ",other:"🌷 "}[routine.type]||"🌷 ")+routine.name;article.append(heading);
+   const count=document.createElement("p");count.className="small";count.textContent=checked.size+" av "+routine.steps.length+" steg klara idag";article.append(count);
+   const progress=document.createElement("progress");progress.max=routine.steps.length||1;progress.value=routine.steps.filter(x=>checked.has(x.id)).length;progress.setAttribute("aria-label","Framsteg för "+routine.name);article.append(progress);
+   for(const step of routine.steps){
+     const label=document.createElement("label");label.className="routine-step09";
+     const input=document.createElement("input");input.type="checkbox";input.checked=checked.has(step.id);
+     input.addEventListener("change",()=>{
+       if(!activeUserId||!syncReady){input.checked=!input.checked;$("routineStatus").textContent="Vänta tills kontot har laddats.";return;}
+       const before=JSON.stringify(routine);const current=new Set(routine.checkedDate===routineToday09() && Array.isArray(routine.checkedIds)?routine.checkedIds:[]);
+       if(input.checked)current.add(step.id);else current.delete(step.id);
+       routine.checkedDate=routineToday09();routine.checkedIds=[...current];
+       if(!save())Object.assign(routine,JSON.parse(before));renderRoutines09();
+     });
+     const span=document.createElement("span");span.textContent=step.text;label.append(input,span);article.append(label);
+   }
+   const actions=document.createElement("div");actions.className="actions";
+   const reset=document.createElement("button");reset.type="button";reset.className="alt";reset.textContent="↩ Börja om idag";
+   reset.addEventListener("click",()=>{if(!confirm("Börja om med denna rutins steg idag?"))return;const oldDate=routine.checkedDate,oldIds=routine.checkedIds;routine.checkedDate=routineToday09();routine.checkedIds=[];if(!save()){routine.checkedDate=oldDate;routine.checkedIds=oldIds;}renderRoutines09();});
+   const del=document.createElement("button");del.type="button";del.className="alt";del.textContent="🗑️ Ta bort rutin";
+   del.addEventListener("click",()=>{if(!confirm("Ta bort rutinen ”"+routine.name+"”?"))return;const old=state.routines;state.routines=old.filter(r=>r.id!==routine.id);if(!save())state.routines=old;renderRoutines09();});
+   actions.append(reset,del);article.append(actions);host.append(article);
+ }
+}
+$("routineAdd").addEventListener("click",()=>{
+ if(!activeUserId||!syncReady){$("routineStatus").textContent="Vänta tills ditt konto har laddats.";return;}
+ const name=$("routineName").value.trim();const steps=$("routineSteps").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+ if(!name||!steps.length){$("routineStatus").textContent="Skriv ett namn och minst ett steg.";return;}
+ if(steps.length>30||steps.some(s=>s.length>120)){ $("routineStatus").textContent="Högst 30 steg och 120 tecken per steg.";return; }
+ if(!Array.isArray(state.routines))state.routines=[];
+ if(state.routines.length>=100){$("routineStatus").textContent="Du kan ha högst 100 rutiner.";return;}
+ const routine={id:routineId09(),name,type:$("routineType").value,steps:steps.map(text=>({id:routineId09(),text})),checkedDate:"",checkedIds:[]};
+ state.routines.push(routine);
+ if(!save()){state.routines.pop();$("routineStatus").textContent="Kunde inte spara rutinen.";return;}
+ $("routineName").value="";$("routineSteps").value="";$("routineStatus").textContent="Rutinen har sparats 💜";renderRoutines09();
+});
+// Om sidan hålls öppen över midnatt, uppdateras dagens avbockningar.
+let routineDate09=routineToday09();setInterval(()=>{if(routineDate09!==routineToday09()){routineDate09=routineToday09();renderRoutines09();}},60000);
+
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 const scheduleStorageKey = "fokuskompisen07schedule";
   let scheduleActivities = JSON.parse(localStorage.getItem(scheduleStorageKey) || "[]");
