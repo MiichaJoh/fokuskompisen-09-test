@@ -326,6 +326,72 @@ body[data-theme="dark"] #loginSection input[type="password"] {
 body[data-theme="dark"] #loginSection input::placeholder { color: #d3cadd !important; }
 body[data-theme="dark"] #headerLogout { background: #454259; color: #ffffff; }
 
+
+/* 0.9: slutlig mörk kontrastfix – mer specifik än äldre ljusa !important-regler. */
+body[data-theme="dark"] #ideasPage #smartIdeasPanel,
+body[data-theme="dark"] #ideasPage #ownPlan08,
+body[data-theme="dark"] #ideasPage #premiumIdeas08,
+body[data-theme="dark"] #aiPage .panel,
+body[data-theme="dark"] #aiPage .notice {
+  background: #343246 !important;
+  color: #f1edf8 !important;
+  border-color: #817a9b !important;
+}
+body[data-theme="dark"] #ideasPage #smartIdeasPanel h3,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel p,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel label,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel .small,
+body[data-theme="dark"] #ideasPage #ownPlan08 *,
+body[data-theme="dark"] #ideasPage #premiumIdeas08 *,
+body[data-theme="dark"] #aiPage .notice *,
+body[data-theme="dark"] #aiPage .panel *,
+body[data-theme="dark"] #aiPage #aiMessages,
+body[data-theme="dark"] #aiPage #aiMessages * {
+  color: #f1edf8 !important;
+}
+body[data-theme="dark"] #ideasPage #smartResult,
+body[data-theme="dark"] #aiPage #aiMessages,
+body[data-theme="dark"] #aiPage .notice {
+  background: #444158 !important;
+  color: #f1edf8 !important;
+}
+body[data-theme="dark"] #ideasPage #smartResult,
+body[data-theme="dark"] #ideasPage #smartResult * {
+  color: #f1edf8 !important;
+}
+body[data-theme="dark"] #ideasPage #ownPlan08 input,
+body[data-theme="dark"] #ideasPage #ownPlan08 textarea,
+body[data-theme="dark"] #ideasPage #ownPlan08 select,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel select,
+body[data-theme="dark"] #aiPage select,
+body[data-theme="dark"] #aiPage textarea {
+  background: #454259 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  border-color: #9b94b1 !important;
+  color-scheme: dark;
+}
+body[data-theme="dark"] #ideasPage #ownPlan08 textarea::placeholder,
+body[data-theme="dark"] #aiPage textarea::placeholder {
+  color: #d3cadd !important;
+  -webkit-text-fill-color: #d3cadd !important;
+}
+body[data-theme="dark"] #backupPage label[for="import"].alt {
+  display: inline-block;
+  background: #625378 !important;
+  color: #ffffff !important;
+  border: 1px solid #9b94b1 !important;
+}
+body[data-theme="dark"] #backupPage label[for="import"].alt:focus-visible {
+  outline: 3px solid #c4a6ff;
+  outline-offset: 2px;
+}
+body[data-theme="dark"] #ideasPage #ownPlan08 button,
+body[data-theme="dark"] #ideasPage #smartIdeasPanel button,
+body[data-theme="dark"] #aiPage button {
+  color: #ffffff !important;
+}
+
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -401,7 +467,7 @@ body[data-theme="dark"] #headerLogout { background: #454259; color: #ffffff; }
   <section id="weekPage"><h2>🗓️ Veckans överblick</h2><div class="week" id="week"></div></section>
 <section id="stepsPage"><h2>👣 Små steg</h2><label for="choose">Välj en uppgift</label><select id="choose"></select><div id="steps" class="panel">Välj en uppgift för att få hjälp med små steg.</div></section>
 <section id="pausePage"><h2>☕ Pauskompis</h2><p>En paus är också viktig. Starta en paus på 20 minuter när du vill.</p><div id="clock">20:00</div><button id="start">Starta paus</button><button class="alt" id="stop">Stoppa och återställ</button><p id="pause" class="panel">Du bestämmer när du är redo igen.</p></section>
-<section id="backupPage"><h2>💾 Säkerhetskopia</h2><p>Exportera dina uppgifter till en JSON-fil innan du uppdaterar eller byter mobil. Förvara filen privat – den kan innehålla personliga uppgifter.</p><div class="actions"><button type="button" id="export">Ladda ner säkerhetskopia</button><label for="import" class="alt" style="display:inline-block;padding:10px;border-radius:9px;cursor:pointer">Välj säkerhetskopia</label><input type="file" id="import" accept=".json,application/json" style="max-width:240px"></div><p class="notice warning">Import ersätter uppgifterna på det inloggade kontot efter synkronisering. Exportera gärna en kopia först. Du får bekräfta innan något ändras.</p><p id="status" role="status"></p><div class="panel" id="syncPanel"><h3>☁️ Mina uppgifter på mitt konto</h3><p id="syncStatus" role="status" aria-live="polite">Kontrollerar synkronisering…</p><button type="button" id="migrateTasks" hidden>📥 Kopiera mina tidigare uppgifter till kontot</button><p class="small">Dina tidigare lokala uppgifter raderas inte. Behåll din JSON-säkerhetskopia.</p></div></section>
+<section id="backupPage"><h2>💾 Säkerhetskopia</h2><p>Exportera dina uppgifter till en JSON-fil innan du uppdaterar eller byter mobil. Förvara filen privat – den kan innehålla personliga uppgifter.</p><div class="actions"><button type="button" id="export">Ladda ner säkerhetskopia</button><label for="import" class="alt" tabindex="0" style="display:inline-block;padding:10px;border-radius:9px;cursor:pointer">Välj säkerhetskopia</label><input type="file" id="import" accept=".json,application/json" style="max-width:240px"></div><p class="notice warning">Import ersätter uppgifterna på det inloggade kontot efter synkronisering. Exportera gärna en kopia först. Du får bekräfta innan något ändras.</p><p id="status" role="status"></p><div class="panel" id="syncPanel"><h3>☁️ Mina uppgifter på mitt konto</h3><p id="syncStatus" role="status" aria-live="polite">Kontrollerar synkronisering…</p><button type="button" id="migrateTasks" hidden>📥 Kopiera mina tidigare uppgifter till kontot</button><p class="small">Dina tidigare lokala uppgifter raderas inte. Behåll din JSON-säkerhetskopia.</p></div></section>
 <section id="ideasPage"><h2>💡 Idébank</h2>
 <h3>🌷 Mina idéer</h3><div id="ideas"></div><p id="idea" class="panel">Välj en liten idé om du vill.</p>
 <div class="panel" id="smartIdeasPanel"><h3>✨ Smarta förslag</h3><p>Välj ett område och något du vill ha hjälp med. Förslagen fungerar även utan internet.</p>
@@ -1537,6 +1603,15 @@ document.getElementById("saveNewPasswordButton").addEventListener("click", async
   }
 });
 
+
+// Tangentbordsstöd för den synliga filväljarknappen.
+const backupPickerLabel = document.querySelector('#backupPage label[for="import"]');
+if (backupPickerLabel) backupPickerLabel.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    document.getElementById('import').click();
+  }
+});
 
 // Fokuskompisen 0.9: offline-demo. Ingen AI-tjänst eller meddelandelagring.
 (function initAiDemo(){
