@@ -1290,6 +1290,10 @@ greeting();energy();render();
 // Fokuskompisen 0.9 – Mina rutiner. Ingår i kontots state och JSON-säkerhetskopian.
 const routineId09 = () => (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now())+"-"+Math.random().toString(36).slice(2);
 const routineToday09 = () => { const d=new Date(); return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-"); };
+// Tillfälliga redigeringsutkast sparas lokalt per konto och rutin.
+const routineDraftKey09 = id => "fokuskompisen09-routine-draft:" + String(activeUserId || "guest") + ":" + String(id);
+function readRoutineDraft09(id){try { const raw=localStorage.getItem(routineDraftKey09(id)); return raw?JSON.parse(raw):null; }catch(_){return null;}}
+function clearRoutineDraft09(id){try{localStorage.removeItem(routineDraftKey09(id));}catch(_){}}
 function renderRoutines09(){
  const host=$("routineList"); if(!host)return;
  host.replaceChildren();
@@ -1319,15 +1323,18 @@ function renderRoutines09(){
    const edit=document.createElement("button");edit.type="button";edit.className="alt";edit.textContent="✏️ Redigera";
    edit.addEventListener("click",()=>{
      const existing=article.querySelector(".routine-edit09");if(existing){existing.remove();return;}
+     const draft=readRoutineDraft09(routine.id);
      const editor=document.createElement("div");editor.className="routine-edit09";
      function field(labelText,tag,id,value){const label=document.createElement("label");label.htmlFor=id;label.textContent=labelText;const control=document.createElement(tag);control.id=id;control.value=value;editor.append(label,control);return control;}
      const prefix="routine-edit-"+String(routine.id).replace(/[^a-zA-Z0-9_-]/g,"-");
-     const nameInput=field("Namn på rutinen","input",prefix+"-name",routine.name);nameInput.maxLength=80;
+     const nameInput=field("Namn på rutinen","input",prefix+"-name",draft && typeof draft.name==="string"?draft.name:routine.name);nameInput.maxLength=80;
      const typeInput=document.createElement("select");typeInput.id=prefix+"-type";
      for(const [value,label] of [["morning","🌅 Morgon"],["evening","🌙 Kväll"],["other","🌷 Annan rutin"]]){const option=document.createElement("option");option.value=value;option.textContent=label;typeInput.append(option);}
-     typeInput.value=routine.type;
+     typeInput.value=draft && ["morning","evening","other"].includes(draft.type)?draft.type:routine.type;
      const typeLabel=document.createElement("label");typeLabel.htmlFor=typeInput.id;typeLabel.textContent="När passar den?";editor.append(typeLabel,typeInput);
-     const stepsInput=field("Steg – ett per rad (flytta rader för att ändra ordning, ta bort rad för att ta bort steg)","textarea",prefix+"-steps",routine.steps.map(x=>x.text).join("\n"));stepsInput.rows=Math.max(4,Math.min(12,routine.steps.length+1));stepsInput.maxLength=3600;
+     const stepsInput=field("Steg – ett per rad (flytta rader för att ändra ordning, ta bort rad för att ta bort steg)","textarea",prefix+"-steps",draft && typeof draft.steps==="string"?draft.steps:routine.steps.map(x=>x.text).join("\n"));stepsInput.rows=Math.max(4,Math.min(12,routine.steps.length+1));stepsInput.maxLength=3600;
+     const storeDraft=()=>{try{localStorage.setItem(routineDraftKey09(routine.id),JSON.stringify({name:nameInput.value,type:typeInput.value,steps:stepsInput.value}));}catch(_){}};
+     nameInput.addEventListener("input",storeDraft);typeInput.addEventListener("change",storeDraft);stepsInput.addEventListener("input",storeDraft);
      const feedback=document.createElement("p");feedback.className="small";feedback.setAttribute("role","alert");editor.append(feedback);
      const buttons=document.createElement("div");buttons.className="actions";
      const saveEdit=document.createElement("button");saveEdit.type="button";saveEdit.textContent="💾 Spara ändringar";
@@ -1349,16 +1356,17 @@ function renderRoutines09(){
        routine.name=newName;routine.type=typeInput.value;routine.steps=nextSteps;
        routine.checkedIds=(routine.checkedIds||[]).filter(id=>nextSteps.some(step=>step.id===id));
        if(!save()){Object.assign(routine,JSON.parse(old));feedback.textContent="Det gick inte att spara. Försök igen.";return;}
-       $("routineStatus").textContent="Ändringarna har sparats 💜";renderRoutines09();
+       clearRoutineDraft09(routine.id);$("routineStatus").textContent="Ändringarna har sparats 💜";renderRoutines09();
      });
-     const cancel=document.createElement("button");cancel.type="button";cancel.className="alt";cancel.textContent="Avbryt";cancel.addEventListener("click",()=>editor.remove());
+     const cancel=document.createElement("button");cancel.type="button";cancel.className="alt";cancel.textContent="Avbryt";cancel.addEventListener("click",()=>{clearRoutineDraft09(routine.id);editor.remove();});
      buttons.append(saveEdit,cancel);editor.append(buttons);actions.before(editor);nameInput.focus();
    });
    const reset=document.createElement("button");reset.type="button";reset.className="alt";reset.textContent="↩ Börja om idag";
    reset.addEventListener("click",()=>{if(!confirm("Börja om med denna rutins steg idag?"))return;const oldDate=routine.checkedDate,oldIds=routine.checkedIds;routine.checkedDate=routineToday09();routine.checkedIds=[];if(!save()){routine.checkedDate=oldDate;routine.checkedIds=oldIds;}renderRoutines09();});
    const del=document.createElement("button");del.type="button";del.className="alt";del.textContent="🗑️ Ta bort rutin";
-   del.addEventListener("click",()=>{if(!confirm("Ta bort rutinen ”"+routine.name+"”?"))return;const old=state.routines;state.routines=old.filter(r=>r.id!==routine.id);if(!save())state.routines=old;renderRoutines09();});
+   del.addEventListener("click",()=>{if(!confirm("Ta bort rutinen ”"+routine.name+"”?"))return;const old=state.routines;state.routines=old.filter(r=>r.id!==routine.id);if(!save())state.routines=old;else clearRoutineDraft09(routine.id);renderRoutines09();});
    actions.append(edit,reset,del);article.append(actions);host.append(article);
+   if(readRoutineDraft09(routine.id)) edit.click();
  }
 }
 $("routineAdd").addEventListener("click",()=>{
