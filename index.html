@@ -427,7 +427,7 @@ button:focus-visible, textarea:focus-visible { outline:3px solid #68458e; outlin
   <button type="button" data-page="schedule">📅 Mitt dagsschema</button><button type="button" data-page="daily">🌷 Min dag</button>
   <button type="button" data-page="tasks">✅ Mina uppgifter</button><button type="button" data-page="addTask">➕ Ny uppgift</button>
   <button type="button" data-page="week">🗓️ Veckoplanering</button><button type="button" data-page="kickoff">🌱 Hjälp mig komma igång</button><button type="button" data-page="steps">👣 Små steg</button><button type="button" data-page="pause">☕ Pauskompis</button><button type="button" data-page="ideas">💡 Idébank</button>
-  <button type="button" data-page="routines">🌅 Mina rutiner</button><button type="button" data-page="reminders">🔔 Mina påminnelser</button>
+  <button type="button" data-page="progress">💜 Mina framsteg</button><button type="button" data-page="routines">🌅 Mina rutiner</button><button type="button" data-page="reminders">🔔 Mina påminnelser</button>
   <button type="button" data-page="ai">💜 AI-kompisen (demo)</button><button type="button" data-page="settings">⚙️ Inställningar</button><button type="button" data-page="backup">💾 Säkerhetskopia</button>
 </nav><p>En sak i taget. Du bestämmer takten.</p></header>
       <main>
@@ -477,6 +477,14 @@ button:focus-visible, textarea:focus-visible { outline:3px solid #68458e; outlin
 </div>
     </section>
     <section id="addTaskPage"><h2>➕ Ny uppgift</h2><form id="add"><label for="task">Vad vill du göra?</label><input id="task" required maxlength="150" placeholder="Till exempel handla mat"><div class="flex"><div><label for="date">Datum (frivilligt)</label><input type="date" id="date"></div><div><label for="priority">Din prioritet</label><select id="priority"><option value="today">Måste göras idag</option><option value="soon">Bra om det blir gjort</option><option value="later">Kan vänta</option></select></div></div><div class="flex"><div><label for="repeat">Upprepa</label><select id="repeat"><option value="none">Inte återkommande</option><option value="daily">Varje dag</option><option value="weekly">Varje vecka</option></select></div><div><label for="remind">Påminn mig i appen (frivilligt)</label><input type="time" id="remind"></div></div><button>Lägg till</button></form><p class="small">Du bestämmer vad som är viktigast. Fokuskompisen bestämmer aldrig åt dig.</p></section>
+<section id="progressPage" hidden aria-labelledby="progressHeading">
+<h2 id="progressHeading">💜 Mina framsteg</h2>
+<p>Här får du se det du har gjort, i din egen takt. Det finns inga mål du måste nå.</p>
+<div class="panel"><h3>🌷 Idag</h3><p id="progressToday" aria-live="polite"></p></div>
+<div class="panel"><h3>🗓️ Den här veckan</h3><p id="progressWeek" aria-live="polite"></p><div id="progressDays" class="week"></div></div>
+<div class="panel"><h3>💜 Dina avklarade uppgifter</h3><div id="progressItems"></div></div>
+<p class="small">Framsteg börjar registreras när du markerar uppgifter som klara i denna version. Äldre avklarade uppgifter visas separat om de saknar datum. Uppgifter som ångras tas bort från sammanställningen. Informationen sparas med ditt konto och ingår i JSON-säkerhetskopian. Ingen AI eller internetuppkoppling krävs för att visa sparade framsteg.</p>
+</section>
 <section id="routinesPage" hidden>
 <h2>🌅 Mina rutiner</h2>
 <p>Gör vardagen enklare med små steg. Bocka av i din egen takt. Stegen börjar om nästa dag, men rutinerna finns kvar.</p>
@@ -604,6 +612,7 @@ const pages = {
   kickoff: "kickoffPage",
   pause: "pausePage",
   ideas: "ideasPage",
+  progress: "progressPage",
   routines: "routinesPage",
   reminders: "remindersPage",
     backup: "backupPage",
@@ -956,7 +965,39 @@ function openTaskSteps08(taskId) {
   renderSteps();
   window.scrollTo(0, 0);
 }
+// 0.9: Avklarade uppgifter, helt baserat på kontots befintliga state.
+// Datum registreras först vid nya avbockningar; äldre data ges inte påhittade datum.
+function renderProgress09(){
+ const todayEl=$("progressToday"),weekEl=$("progressWeek"),daysEl=$("progressDays"),itemsEl=$("progressItems");
+ if(!todayEl||!weekEl||!daysEl||!itemsEl)return;
+ const now=new Date();now.setHours(12,0,0,0);
+ const today=dateKey();
+ const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));
+ const keyOf=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+ const start=keyOf(monday);
+ const completed=state.tasks.filter(t=>t.done);
+ const dated=completed.filter(t=>/^\d{4}-\d{2}-\d{2}$/.test(t.completedOn09||""));
+ const todays=dated.filter(t=>t.completedOn09===today);
+ const weekly=dated.filter(t=>t.completedOn09>=start&&t.completedOn09<=today);
+ todayEl.textContent=todays.length ? `Du har klarat ${todays.length} ${todays.length===1?"uppgift":"uppgifter"} idag. Varje litet steg räknas. 💜` : "Inga avklarade uppgifter registrerade idag. Det är helt okej att vila. 💜";
+ weekEl.textContent=weekly.length ? `${weekly.length} ${weekly.length===1?"uppgift":"uppgifter"} registrerade den här veckan.` : "Inga avklarade uppgifter registrerade den här veckan ännu.";
+ daysEl.replaceChildren();
+ const weekdays=["Mån","Tis","Ons","Tor","Fre","Lör","Sön"];
+ for(let i=0;i<7;i++){
+  const d=new Date(monday);d.setDate(monday.getDate()+i);const k=keyOf(d);
+  const count=dated.filter(t=>t.completedOn09===k).length;
+  const el=document.createElement("div");el.className="panel";
+  const strong=document.createElement("strong");strong.textContent=weekdays[i];
+  const value=document.createElement("p");value.textContent=k>today?"Kommande":count?`${count} klara`:"Ingen registrering";
+  el.append(strong,value);daysEl.append(el);
+ }
+ itemsEl.replaceChildren();
+ if(!completed.length){const p=document.createElement("p");p.textContent="Inga avklarade uppgifter just nu.";itemsEl.append(p);return;}
+ const sorted=[...completed].sort((a,b)=>(b.completedOn09||"").localeCompare(a.completedOn09||""));
+ for(const t of sorted){const p=document.createElement("p");p.className="panel";p.textContent="✓ "+t.name+(t.completedOn09?" · "+t.completedOn09:" · Avklarad tidigare (datum saknas)");itemsEl.append(p);}
+}
 function render(){
+    renderProgress09();
     updateHomeTasks();
 updateHomeReminders();
   const box=$("tasks");box.innerHTML="";box.classList.add("task-columns08");
@@ -1009,7 +1050,11 @@ updateHomeReminders();
         while(d<=dateKey())d=addDays(d,t.repeat==="daily"?1:7);
         t.date=d;
         $("status").textContent="Återkommande uppgift flyttad till nästa tillfälle.";
-      }else t.done=!t.done;
+      }else {
+        t.done=!t.done;
+        if(t.done)t.completedOn09=dateKey();
+        else delete t.completedOn09;
+      }
       save();render()
     };
     div.querySelector(".del").onclick=()=>{if(!confirm("Ta bort uppgiften?"))return;state.tasks=state.tasks.filter(x=>x!==t);save();render()};
