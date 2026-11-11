@@ -240,6 +240,92 @@ body[data-theme="dark"] #aiPage textarea,
 body[data-theme="dark"] #aiPage select { color: #ffffff; background: #454259; }
 body[data-theme="dark"] #aiPage button.alt { color: #563879; background: #eae1f4; }
 body[data-theme="dark"] #ideasPage #ownPlan08 .small { color: #51435f; }
+
+/* 0.9: sammanhängande mörkt tema på samtliga sidor.
+   Läggs sist för att ersätta äldre regler som tvingade fram ljusa kort. */
+body[data-theme="dark"] { color-scheme: dark; }
+body[data-theme="dark"] main section,
+body[data-theme="dark"] main .panel,
+body[data-theme="dark"] main .notice,
+body[data-theme="dark"] main .warning,
+body[data-theme="dark"] #smartIdeasPanel,
+body[data-theme="dark"] #smartResult,
+body[data-theme="dark"] #premiumIdeas08,
+body[data-theme="dark"] #ownPlan08,
+body[data-theme="dark"] #aiMessages,
+body[data-theme="dark"] #syncPanel,
+body[data-theme="dark"] #loginSection {
+  background-color: #343246 !important;
+  color: #f1edf8 !important;
+  border-color: #817a9b;
+}
+body[data-theme="dark"] main .panel,
+body[data-theme="dark"] main .notice,
+body[data-theme="dark"] main .warning,
+body[data-theme="dark"] #smartResult,
+body[data-theme="dark"] #aiMessages,
+body[data-theme="dark"] #loginMessage:not(:empty) {
+  background-color: #444158 !important;
+}
+body[data-theme="dark"] main section h1,
+body[data-theme="dark"] main section h2,
+body[data-theme="dark"] main section h3,
+body[data-theme="dark"] main section p,
+body[data-theme="dark"] main section li,
+body[data-theme="dark"] main section label,
+body[data-theme="dark"] main section strong,
+body[data-theme="dark"] main section summary,
+body[data-theme="dark"] main section .small,
+body[data-theme="dark"] #syncPanel,
+body[data-theme="dark"] #syncPanel h3,
+body[data-theme="dark"] #syncPanel p,
+body[data-theme="dark"] #syncStatus,
+body[data-theme="dark"] #smartIdeasPanel *,
+body[data-theme="dark"] #premiumIdeas08 *,
+body[data-theme="dark"] #ownPlan08 *,
+body[data-theme="dark"] #aiMessages *,
+body[data-theme="dark"] #backupPage .notice.warning {
+  color: #f1edf8 !important;
+}
+body[data-theme="dark"] main input:not([type="checkbox"]),
+body[data-theme="dark"] main textarea,
+body[data-theme="dark"] main select,
+body[data-theme="dark"] #smartCategory,
+body[data-theme="dark"] #ownPlan08 textarea,
+body[data-theme="dark"] #ownPlan08 select {
+  background-color: #454259 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+  border-color: #9b94b1 !important;
+  color-scheme: dark;
+}
+body[data-theme="dark"] main input::placeholder,
+body[data-theme="dark"] main textarea::placeholder {
+  color: #d3cadd !important;
+  opacity: 1;
+}
+body[data-theme="dark"] main button:not(.alt),
+body[data-theme="dark"] #ownPlan08 button:not(.alt),
+body[data-theme="dark"] #smartIdeasPanel button:not(.alt) {
+  color: #ffffff !important;
+}
+body[data-theme="dark"] main button.alt {
+  background: #625378 !important;
+  color: #ffffff !important;
+}
+body[data-theme="dark"] #clock,
+body[data-theme="dark"] footer { color: #f1edf8 !important; }
+body[data-theme="dark"] #loginSection input[type="email"],
+body[data-theme="dark"] #loginSection input[type="password"] {
+  background: #454259 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  color-scheme: dark;
+}
+body[data-theme="dark"] #loginSection input::placeholder { color: #d3cadd !important; }
+body[data-theme="dark"] #headerLogout { background: #454259; color: #ffffff; }
+
 </style>
 </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1458,6 +1544,19 @@ document.getElementById("saveNewPasswordButton").addEventListener("click", async
  const input=document.getElementById('aiInput');
  const tone=document.getElementById('aiTone');
  const length=document.getElementById('aiLength');
+ // Valen sparas enbart lokalt. Själva chattmeddelandena sparas inte.
+ const AI_PREFS_KEY='fokuskompisen09_ai_preferences';
+ try {
+   const prefs=JSON.parse(localStorage.getItem(AI_PREFS_KEY)||'{}');
+   if(['warm','clear','peppy'].includes(prefs.tone)) tone.value=prefs.tone;
+   if(['short','medium','long'].includes(prefs.length)) length.value=prefs.length;
+ } catch (_) { /* Appen fungerar även om lagringen inte är tillgänglig. */ }
+ function saveAiPrefs(){
+   try { localStorage.setItem(AI_PREFS_KEY,JSON.stringify({tone:tone.value,length:length.value})); } catch (_) {}
+ }
+ tone.addEventListener('change',saveAiPrefs);
+ length.addEventListener('change',saveAiPrefs);
+
  if(!messages || !input) return;
  function addMessage(sender, content){
    const row=document.createElement('p');
